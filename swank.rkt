@@ -1,14 +1,23 @@
 #lang racket
 
-(require racket/tcp)
+(provide serialize-result-message
+         extract-message
+         handle-message)
 
-(define listener (tcp-listen 4005 5 #t))
-(displayln "Racket Swank server listening. Port: 4005")
+(define-namespace-anchor a)
+(define ns (namespace-anchor->namespace a))
 
-(let mainloop []
-  (let-values [[(i o) (tcp-accept listener)]] 
-      (thread (λ []
-               (displayln (read-line i 'any))
-               (display "000016(:return (:ok nil) 1)\n" o)
-               (close-output-port o))))
-  (mainloop))
+(define [extract-message line]
+  (eval 
+    (read 
+      (open-input-string 
+        (string-append "'" (substring line 6)))) ns))
+
+(define [handle-message msg]
+  '(:return (:ok nil) 1))
+
+(define [serialize-result-message msg]
+  (let [[stringified (~s msg)]]
+    (string-append (~r (+ (string-length stringified) 1) 
+                     #:base 16 #:min-width 6 #:pad-string "0") 
+                   stringified "\n")))
