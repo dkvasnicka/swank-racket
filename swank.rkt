@@ -1,5 +1,8 @@
 #lang racket
 
+(require racket/match
+         mzlib/os)
+
 (provide serialize-result-message
          extract-message
          handle-message)
@@ -14,7 +17,24 @@
         (string-append "'" (substring line 6)))) ns))
 
 (define [handle-message msg]
-  '(:return (:ok nil) 1))
+  (let* [[cmd (cadr msg)]
+         [continuation (last msg)]]
+    (match cmd
+           [(list 'swank:connection-info) `(:return (:ok (:pid ,(getpid)
+                                                          :package (:name Racket :prompt Racket) 
+                                                          :encoding (:coding-systems ("utf-8-unix")) 
+                                                          :lisp-implementation 
+                                                            (:type "Racket" :version ,(version)))) ,continuation)]
+
+           [(list 'swank:swank-require swank-repl) `(:return (:ok nil) ,continuation)]
+           
+           [(list 'swank:create-repl nil) `(:return (:ok "Racket" "Racket") ,continuation)]
+           
+           [(list 'swank:operator-arglist fn _) `(:return (:ok ,fn) ,continuation)]
+           
+           [(list 'swank:listener-eval code) `(:return (:ok (:values "3")) ,continuation)]
+           
+           [_ `(:return (:ok nil) ,continuation)])))
 
 (define [serialize-result-message msg]
   (let [[stringified (~s msg)]]
