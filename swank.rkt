@@ -4,17 +4,10 @@
          mzlib/os)
 
 (provide serialize-result-message
-         extract-message
          handle-message)
 
 (define-namespace-anchor a)
 (define ns (namespace-anchor->namespace a))
-
-(define [extract-message line]
-  (eval 
-    (read 
-      (open-input-string 
-        (string-append "'" (substring line 6)))) ns))
 
 (define [handle-message msg]
   (let* [[cmd (cadr msg)]

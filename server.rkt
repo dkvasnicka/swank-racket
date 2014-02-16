@@ -12,11 +12,8 @@
   (displayln "Client connection accepted!")
 
   (let mainloop []  
-       (define msg-bytes (make-bytes 1024)) 
-       (read-bytes-avail! msg-bytes i)
-       (let [[msg-result (handle-message 
-                           (extract-message 
-                             (bytes->string/utf-8 msg-bytes)))]]
+       (read i) ; We don't care about the size info ATM
+       (let [[msg-result (handle-message (read i))]]
            (display (serialize-result-message msg-result) o)
            (flush-output o)) 
        (mainloop)))
