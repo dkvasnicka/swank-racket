@@ -6,10 +6,13 @@
 (provide serialize-result-message
          handle-message)
 
-(define-namespace-anchor a)
-(define ns (namespace-anchor->namespace a))
+(define [send-to-repl to-repl from-repl code]
+    (displayln code)
+    (displayln code to-repl)
+    (flush-output to-repl)
+    (read-line from-repl))
 
-(define [handle-message msg]
+(define [handle-message msg to-repl from-repl]
   (let* [[cmd (cadr msg)]
          [continuation (last msg)]]
     (match cmd
@@ -23,9 +26,9 @@
            
            [(list 'swank:create-repl nil) `(:return (:ok "Racket" "Racket") ,continuation)]
            
-           [(list 'swank:operator-arglist fn _) `(:return (:ok ,fn) ,continuation)]
+           [(list 'swank:operator-arglist fn _) `(:return (:ok "([x])") ,continuation)]
            
-           [(list 'swank:listener-eval code) `(:return (:ok (:values "3")) ,continuation)]
+           [(list 'swank:listener-eval code) `(:return (:ok (:values ,(send-to-repl to-repl from-repl code))) ,continuation)]
            
            [_ `(:return (:ok nil) ,continuation)])))
 
