@@ -6,9 +6,6 @@
 (define listener (tcp-listen 4005 5 #t))
 (displayln "Running Racket Swank server on port 4005")
 
-(define-namespace-anchor a)
-(define ns (namespace-anchor->namespace a))
-
 (define [start-server]
   (displayln "Waiting for the client to connect.")  
   (define-values [i o] (tcp-accept listener)) 
@@ -18,11 +15,14 @@
   (define-values [local-tap repl-sink] (make-pipe))
   
   (thread (λ []
-             (parameterize [[current-namespace ns]
+             (parameterize [[current-namespace (make-base-namespace)]
                             (current-input-port repl-tap)
                             (current-output-port repl-sink)
                             (current-error-port repl-sink)]
                         (read-eval-print-loop))))
+ 
+  ; read away the first prompt "> " - workaround?
+  (read-bytes 2 local-tap)  
   
   (let mainloop []  
        (read i) ; We don't care about the size info ATM
