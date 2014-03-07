@@ -7,8 +7,8 @@ Swank server is what gives you an interactive Lisp/Scheme environment when worki
 
 ### Status & limitations
 
+- What works (in a basic way): evaluation, code completion
 - Only tested with Vim & SLIMV - Emacs & SLIME testers needed!
-- Basically the only thing working right now is evaluation
 
 ### Howto
 

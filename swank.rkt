@@ -2,10 +2,15 @@
 
 (require racket/match
          mzlib/os
-         scribble/decode)
+         scribble/decode
+         srfi/13)
 
 (provide serialize-result-message
          handle-message)
+
+(define racket-base-symbols
+    (let-values [[[procs1 procs2] (module->exports 'racket/base)]]
+        (map symbol->string (filter symbol? (flatten (append procs1 procs2))))))
 
 (define [do-send-to-repl to-repl from-repl code]
     (display code to-repl)
@@ -24,6 +29,10 @@
         ""
         (do-send-to-repl to-repl from-repl code)))
 
+(define [code-complete pattern]
+    (let [[candidates (filter (curry string-prefix-ci? pattern) racket-base-symbols)]]
+         (if (empty? candidates) 'nil candidates)))
+
 (define [handle-message msg to-repl from-repl]
     (let* [[cmd (cadr msg)]
            [continuation (last msg)]]
@@ -41,6 +50,8 @@
                [(list 'swank:operator-arglist fn _) `(:return (:ok "([x])") ,continuation)]
                
                [(list 'swank:listener-eval code) `(:return (:ok (:values ,(evaluate to-repl from-repl code))) ,continuation)]
+               
+               [(list 'swank:simple-completions pattern _) `(:return (:ok ,(list (code-complete pattern) pattern)) ,continuation)]
                
                [_ `(:return (:ok nil) ,continuation)])))
 
