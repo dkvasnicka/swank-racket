@@ -10,25 +10,25 @@
   (displayln "Waiting for the client to connect.")  
   (define-values [i o] (tcp-accept listener)) 
   (displayln "Client connection accepted!")
-
-  (define-values [repl-tap local-sink] (make-pipe))
-  (define-values [local-tap repl-sink] (make-pipe))
   
-  (thread (λ []
-             (parameterize [[current-namespace (make-base-namespace)]
-                            (current-input-port repl-tap)
-                            (current-output-port repl-sink)
-                            (current-error-port repl-sink)]
-                        (read-eval-print-loop))))
- 
-  ; read away the first prompt "> " - workaround?
-  (read-bytes 2 local-tap)  
-  
-  (let mainloop []  
-       (read i) ; We don't care about the size info ATM
-       (let [[msg-result (handle-message (read i) local-sink local-tap)]]
-           (display (serialize-result-message msg-result) o)
-           (flush-output o)) 
-       (mainloop)))
+  (let*-values [[[repl-tap local-sink] (make-pipe)]
+                [[local-tap repl-sink] (make-pipe)]]
+               
+      (thread (λ []
+                 (parameterize [[current-namespace (make-base-namespace)]
+                                (current-input-port repl-tap)
+                                (current-output-port repl-sink)
+                                (current-error-port repl-sink)]
+                            (read-eval-print-loop))))
+     
+      ; read away the first prompt "> " - workaround?
+      (read-bytes 2 local-tap)  
+      
+      (let mainloop []  
+           (read i) ; We don't care about the size info ATM
+           (let [[msg-result (handle-message (read i) local-sink local-tap)]]
+               (display (serialize-result-message msg-result) o)
+               (flush-output o)) 
+           (mainloop))))
 
 (start-server)
