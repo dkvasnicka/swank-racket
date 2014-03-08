@@ -12,7 +12,7 @@
     (displayln "Client connection accepted!")
 
     (let*-values [[[repl-tap local-sink] (make-pipe)]
-                [[local-tap repl-sink] (make-pipe)]]
+                  [[local-tap repl-sink] (make-pipe)]]
                
         (thread (λ []
                  (parameterize [[current-namespace (make-base-namespace)]

@@ -6,11 +6,15 @@
          srfi/13)
 
 (provide serialize-result-message
-         handle-message)
+         handle-message
+         tolerant-string-drop-right)
 
 (define racket-base-symbols
     (let-values [[[procs1 procs2] (module->exports 'racket/base)]]
         (map symbol->string (filter symbol? (flatten (append procs1 procs2))))))
+
+(define [tolerant-string-drop-right str n]
+    (string-drop-right str (min n (string-length str))))
 
 (define [do-send-to-repl to-repl from-repl code]
     (display code to-repl)
@@ -21,8 +25,8 @@
           (readlines (bytes-append bytes 
                                    (make-bytes 1 
                                                (read-byte from-repl))))
-          (bytes->string/utf-8 
-            (subbytes bytes 0 (- (bytes-length bytes) 3))))))
+          (tolerant-string-drop-right 
+            (bytes->string/utf-8 bytes) 3))))
 
 (define [evaluate to-repl from-repl code]
     (if (whitespace? code)
