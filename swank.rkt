@@ -10,7 +10,7 @@
          tolerant-string-drop-right)
 
 (define racket-base-symbols
-    (let-values [[[procs1 procs2] (module->exports 'racket/base)]]
+    (let-values [[[procs1 procs2] (module->exports 'racket)]]
         (map symbol->string (filter symbol? (flatten (append procs1 procs2))))))
 
 (define [tolerant-string-drop-right str n]
@@ -28,10 +28,17 @@
           (tolerant-string-drop-right 
             (bytes->string/utf-8 bytes) 3))))
 
+(define [strip-lang-directive code]
+    (string-join 
+      (filter (curry (compose1 not string-prefix-ci?) "#lang") 
+              (string-split code "\n")) 
+      "\n"))
+
 (define [evaluate to-repl from-repl code]
     (if (whitespace? code)
         ""
-        (do-send-to-repl to-repl from-repl code)))
+        (do-send-to-repl to-repl from-repl 
+                         (strip-lang-directive code))))
 
 (define [code-complete pattern]
     (let [[candidates (filter (curry string-prefix-ci? pattern) racket-base-symbols)]]
@@ -41,21 +48,27 @@
     (let* [[cmd (cadr msg)]
            [continuation (last msg)]]
         (match cmd
-               [(list 'swank:connection-info) `(:return (:ok (:pid ,(getpid)
-                                                              :package (:name Racket :prompt Racket) 
-                                                              :encoding (:coding-systems ("utf-8-unix")) 
-                                                              :lisp-implementation 
-                                                                (:type "Racket" :version ,(version)))) ,continuation)]
+               [(list 'swank:connection-info) 
+                `(:return (:ok (:pid ,(getpid)
+                              :package (:name Racket :prompt Racket) 
+                              :encoding (:coding-systems ("utf-8-unix")) 
+                              :lisp-implementation 
+                                (:type "Racket" :version ,(version)))) ,continuation)]
 
-               [(list 'swank:swank-require swank-repl) `(:return (:ok nil) ,continuation)]
+               [(list 'swank:swank-require swank-repl) 
+                `(:return (:ok nil) ,continuation)]
                
-               [(list 'swank:create-repl nil) `(:return (:ok "Racket" "Racket") ,continuation)]
+               [(list 'swank:create-repl nil) 
+                `(:return (:ok "Racket" "Racket") ,continuation)]
                
-               [(list 'swank:operator-arglist fn _) `(:return (:ok "([x])") ,continuation)]
+               [(list 'swank:operator-arglist fn _) 
+                `(:return (:ok "([x])") ,continuation)]
                
-               [(list 'swank:listener-eval code) `(:return (:ok (:values ,(evaluate to-repl from-repl code))) ,continuation)]
+               [(list 'swank:listener-eval code) 
+                `(:return (:ok (:values ,(evaluate to-repl from-repl code))) ,continuation)]
                
-               [(list 'swank:simple-completions pattern _) `(:return (:ok ,(list (code-complete pattern) pattern)) ,continuation)]
+               [(list 'swank:simple-completions pattern _) 
+                `(:return (:ok ,(list (code-complete pattern) pattern)) ,continuation)]
                
                [_ `(:return (:ok nil) ,continuation)])))
 

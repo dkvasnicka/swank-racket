@@ -1,6 +1,7 @@
 #lang racket
 
 (require racket/tcp
+         racket/sandbox
          "swank.rkt")
 
 (define listener (tcp-listen 4005 5 #t))
