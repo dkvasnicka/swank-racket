@@ -16,11 +16,13 @@
                   [[local-tap repl-sink] (make-pipe)]]
                
         (thread (λ []
-                 (parameterize [[current-namespace (make-base-namespace)]
-                                (current-input-port repl-tap)
+                 (parameterize [(current-input-port repl-tap)
                                 (current-output-port repl-sink)
-                                (current-error-port repl-sink)]
-                            (read-eval-print-loop))))
+                                (current-error-port repl-sink)
+                                (sandbox-path-permissions '((write "/")))
+                                (current-namespace (make-empty-namespace))]
+                               (parameterize [(current-eval (make-evaluator 'racket))]
+                                    (read-eval-print-loop)))))
 
         ; read away the first prompt "> " - workaround?
         (read-bytes 2 local-tap)  
