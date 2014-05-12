@@ -67,6 +67,15 @@
                [(list 'swank:listener-eval code) 
                 `(:return (:ok (:values ,(evaluate to-repl from-repl code))) ,continuation)]
                
+               [(list 'swank:eval-and-grab-output code)
+                `(:return (:ok (,(evaluate to-repl from-repl code) "")) ,continuation)]
+
+               [(list (or 'swank:interactive-eval 'swank:pprint-eval) code)
+                `(:return (:ok ,(evaluate to-repl from-repl code)) ,continuation)]
+
+               [(list 'swank:interactive-eval-region code)
+                `(:return (:ok (:values ,(evaluate to-repl from-repl code))) ,continuation)]
+
                [(list 'swank:simple-completions pattern _) 
                 `(:return (:ok ,(list (code-complete pattern) pattern)) ,continuation)]
                
