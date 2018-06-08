@@ -1,6 +1,8 @@
 swank-racket
 ============
 
+NO LONGER MAINTAINED. Check out [https://github.com/mbal/swank-racket](https://github.com/mbal/swank-racket)
+
 This is a Swank server for the [Racket](http://racket-lang.org) programming language (formerly PLT Scheme).
 
 Swank server is what gives you an interactive Lisp / Scheme environment when working with SLIME (Emacs) or SLIMV (Vim).
